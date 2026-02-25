@@ -1,0 +1,176 @@
+---
+description: Yii to NestJS conversion workflow and requirements
+---
+
+# Yii to NestJS Conversion Guide
+
+## Overview
+
+This guide defines the step-by-step process for converting a Yii backend to NestJS, following strict enterprise-grade best practices while maintaining API compatibility.
+
+## 1️⃣ Enterprise Folder Structure
+
+Each module MUST follow this exact structure:
+
+```
+src/modules/<module>/
+├── <module>.module.ts
+├── controllers/
+│   ├── <module>.controller.ts         # shared/common endpoints
+│   ├── <module>.admin.controller.ts   # admin actions → /admin/<module>
+│   └── <module>.public.controller.ts  # public/user actions → /public/<module>
+├── services/
+│   ├── <module>.service.ts            # shared business logic
+│   ├── <module>.admin.service.ts      # admin-only business logic
+│   └── <module>.public.service.ts     # public/user business logic
+├── dto/
+│   ├── create-<module>.dto.ts
+│   └── update-<module>.dto.ts
+├── entities/
+│   └── <module>.entity.ts
+└── docs/
+    └── <module>.swagger.ts             # Swagger documentation (NO inline annotations)
+```
+
+## 2️⃣ Core Rules
+
+### Controllers
+- **Controllers are THIN** — only handle routing, validation, and delegation to services
+- **NO business logic** in controllers — all logic goes in services
+- Separate controllers by role: shared, admin, public
+- Use route prefixes: `/admin/<module>` for admin, `/public/<module>` for public
+
+### Services
+- **ALL business logic** goes in services
+- Separate services by role: shared, admin, public
+- Services handle data transformation, validation, and business rules
+- Services interact with repositories/entities for database operations
+
+### DTOs
+- Use `class-validator` decorators for validation
+- Use `class-transformer` for data transformation
+- All DTOs MUST have `@ApiProperty()` decorators for Swagger
+- Create separate DTOs for create and update operations
+
+### Entities
+- Extend `BaseEntity` from `src/common/entities/base.entity.ts`
+- Use TypeORM decorators (`@Entity`, `@Column`, etc.)
+- All entity properties MUST have `@ApiProperty()` decorators for Swagger
+- Match Yii entity structure and field names exactly
+
+### TypeScript & Code Quality
+- Use TypeScript with strong typing
+- Keep code clean, readable, maintainable, and production-ready
+- Follow NestJS best practices and patterns
+- Use dependency injection throughout
+
+## 3️⃣ API Requirements (CRITICAL)
+
+### Response Compatibility
+- **Keep the exact same endpoints** as in the Yii backend
+- **Responses must match** the original Yii API structure exactly
+- **Field names must match** the Yii API response
+- **Status codes must match** the Yii API behavior
+- **Any logic affecting response formatting** must be handled in services
+
+### Endpoint Mapping
+- Map Yii routes to NestJS routes maintaining the same path structure
+- Preserve query parameters, request bodies, and response formats
+- Maintain backward compatibility with existing API consumers
+
+## 4️⃣ Conversion Process
+
+### Step-by-Step Workflow
+
+1. **Receive Yii Code**: User provides Yii controller(s) and entity/entities for a module
+2. **Analyze Structure**: Understand the Yii module's endpoints, logic, and data structure
+3. **Create NestJS Module**: Generate the complete NestJS module following the folder structure
+4. **Generate Components**:
+   - NestJS module file (`<module>.module.ts`)
+   - Controllers (admin/public/shared as needed)
+   - Services (admin/public/shared as needed)
+   - DTOs (create and update)
+   - Entity (matching Yii structure)
+5. **Generate Swagger Documentation**: Create `docs/<module>.swagger.ts` file
+6. **Verify API Compatibility**: Ensure responses match Yii API exactly
+7. **Register Module**: Add module to [AppModule](mdc:src/app.module.ts)
+
+### Conversion Guidelines
+
+- **Only convert the part provided** — don't convert more than requested
+- **Preserve all business logic** from Yii controllers and models
+- **Maintain data relationships** and entity associations
+- **Keep validation rules** from Yii models
+- **Preserve error handling** and response formats
+
+## 5️⃣ Swagger Documentation
+
+### Requirements
+
+- **NO inline Swagger annotations** in controllers
+- **All Swagger documentation** goes in `docs/<module>.swagger.ts`
+- **Complete documentation** for all endpoints:
+  - Endpoint paths, methods, and summaries
+  - Request DTO schemas
+  - Response DTO schemas
+  - Response examples matching Yii API
+  - Error responses
+  - Query parameters
+  - Path parameters
+
+### Swagger Pattern
+
+1. Create `docs/<module>.swagger.ts` file
+2. Export decorator functions for each endpoint
+3. Import and apply in controllers: `@<Module>ControllerDocs.methodName()`
+4. Use helpers from `src/common/swagger/swagger-helper.ts` for common patterns
+5. Ensure Swagger docs are fully compatible with NestJS Swagger module
+
+### Example Structure
+
+```typescript
+// docs/<module>.swagger.ts
+export const <Module>ControllerDocs = {
+  controller: () => applyDecorators(...),
+  findAll: () => applyDecorators(...),
+  findOne: () => applyDecorators(...),
+  create: () => applyDecorators(...),
+  update: () => applyDecorators(...),
+  remove: () => applyDecorators(...),
+};
+```
+
+## 6️⃣ Reference Implementation
+
+See `src/modules/users/` as the reference implementation for:
+- Module structure
+- Controller patterns
+- Service patterns
+- DTO validation
+- Entity structure
+- Swagger documentation
+
+## 7️⃣ Quality Checklist
+
+Before completing a conversion, verify:
+
+- ✅ Module follows exact folder structure
+- ✅ Controllers are thin (no business logic)
+- ✅ Services contain all business logic
+- ✅ DTOs have proper validation decorators
+- ✅ Entity matches Yii structure
+- ✅ Swagger documentation is complete and separate
+- ✅ API responses match Yii API exactly
+- ✅ Endpoints match Yii routes
+- ✅ Status codes match Yii behavior
+- ✅ Error handling matches Yii responses
+- ✅ Module is registered in AppModule
+- ✅ Code is typed, clean, and production-ready
+
+## 8️⃣ Goals
+
+- ✅ Maintain enterprise-grade structure
+- ✅ Preserve identical API responses
+- ✅ Keep code scalable, maintainable, and production-ready
+- ✅ Keep Swagger docs separate, organized, and complete
+- ✅ Ensure seamless migration with zero breaking changes for API consumers
