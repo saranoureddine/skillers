@@ -54,13 +54,13 @@ export class UserBlocksPublicService {
   async blockUser(blockerId: string, dto: BlockUserDto): Promise<any> {
     try {
       // Check if trying to block themselves
-      if (blockerId === dto.blockedUserId) {
+      if (blockerId === dto.blocked_user_id) {
         throw new BadRequestException('You cannot block yourself');
       }
 
       // Check if blocked user exists
       const blockedUser = await this.usersRepository.findOne({
-        where: { id: dto.blockedUserId },
+        where: { id: dto.blocked_user_id },
       });
       if (!blockedUser) {
         throw new NotFoundException('User not found');
@@ -70,7 +70,7 @@ export class UserBlocksPublicService {
       const existingBlock = await this.userBlocksRepository.findOne({
         where: {
           blockerId,
-          blockedId: dto.blockedUserId,
+          blockedId: dto.blocked_user_id,
         },
       });
 
@@ -81,7 +81,7 @@ export class UserBlocksPublicService {
       // Create block
       const block = this.userBlocksRepository.create({
         blockerId,
-        blockedId: dto.blockedUserId,
+        blockedId: dto.blocked_user_id,
         reason: dto.reason || null,
         createdAt: new Date(),
       } as Partial<UserBlockEntity>);
@@ -110,7 +110,7 @@ export class UserBlocksPublicService {
       const block = await this.userBlocksRepository.findOne({
         where: {
           blockerId,
-          blockedId: dto.blockedUserId,
+          blockedId: dto.blocked_user_id,
         },
       });
 
@@ -230,6 +230,37 @@ export class UserBlocksPublicService {
         throw error;
       }
       throw new InternalServerErrorException('Failed to check block status');
+    }
+  }
+
+  /**
+   * Get all blocked relationships for a user
+   * Returns array of user IDs that are blocked (users I blocked + users who blocked me)
+   * Matches Yii UserBlocks::getAllBlockedRelationships() implementation
+   */
+  async getAllBlockedRelationships(userId: string): Promise<string[]> {
+    try {
+      // Get users I blocked
+      const blockedByMe = await this.userBlocksRepository.find({
+        where: { blockerId: userId },
+        select: ['blockedId'],
+      });
+
+      // Get users who blocked me
+      const blockedMe = await this.userBlocksRepository.find({
+        where: { blockedId: userId },
+        select: ['blockerId'],
+      });
+
+      // Combine and deduplicate
+      const blockedIds = new Set<string>();
+      blockedByMe.forEach((block) => blockedIds.add(block.blockedId));
+      blockedMe.forEach((block) => blockedIds.add(block.blockerId));
+
+      return Array.from(blockedIds);
+    } catch (error) {
+      // Return empty array on error to avoid breaking feed queries
+      return [];
     }
   }
 }

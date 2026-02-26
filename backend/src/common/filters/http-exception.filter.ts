@@ -23,6 +23,42 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
+      
+      // Check if exception response already has Yii-compatible format (has 'success' field)
+      if (
+        typeof exceptionResponse === 'object' &&
+        exceptionResponse !== null &&
+        'success' in exceptionResponse
+      ) {
+        // Return Yii-compatible format as-is
+        this.logger.error(
+          `[${request.method}] ${request.url} - ${status}`,
+          exception instanceof Error ? exception.stack : String(exception),
+        );
+        response.status(status).json(exceptionResponse);
+        return;
+      }
+
+      // Handle validation errors (BadRequestException with errors array)
+      if (
+        status === HttpStatus.BAD_REQUEST &&
+        typeof exceptionResponse === 'object' &&
+        exceptionResponse !== null &&
+        'errors' in exceptionResponse
+      ) {
+        const errorObj = exceptionResponse as any;
+        this.logger.error(
+          `[${request.method}] ${request.url} - ${status}`,
+          exception instanceof Error ? exception.stack : String(exception),
+        );
+        response.status(status).json({
+          success: false,
+          message: errorObj.message || 'Validation failed',
+          errors: errorObj.errors,
+        });
+        return;
+      }
+
       message =
         typeof exceptionResponse === 'string'
           ? exceptionResponse
@@ -34,6 +70,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       exception instanceof Error ? exception.stack : String(exception),
     );
 
+    // Default error format (for non-Yii-compatible exceptions)
     response.status(status).json({
       success: false,
       statusCode: status,

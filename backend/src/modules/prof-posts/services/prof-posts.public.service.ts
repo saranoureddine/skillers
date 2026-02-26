@@ -21,7 +21,7 @@ import {
   DeletePostDto,
   PinPostDto,
   GetFeedDto,
-  GetTrendingPostsDto,
+  PostsGetTrendingPostsDto,
 } from '../dto';
 
 /**
@@ -565,7 +565,7 @@ export class ProfPostsPublicService {
    * Get trending posts (actionGetTrendingPosts)
    * Matches Yii implementation exactly
    */
-  async getTrendingPosts(userId: string, dto: GetTrendingPostsDto, languageCode: string = 'en'): Promise<any> {
+  async getTrendingPosts(userId: string, dto: PostsGetTrendingPostsDto, languageCode: string = 'en'): Promise<any> {
     try {
       const page = dto.page || 1;
       const limit = dto.limit || 20;

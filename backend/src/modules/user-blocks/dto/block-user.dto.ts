@@ -10,7 +10,7 @@ export class BlockUserDto {
   @IsNotEmpty()
   @IsString()
   @MaxLength(20)
-  blockedUserId: string;
+  blocked_user_id: string;
 
   @ApiPropertyOptional({
     description: 'Reason for blocking',
