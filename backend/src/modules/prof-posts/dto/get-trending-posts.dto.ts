@@ -2,7 +2,7 @@ import { IsOptional, IsInt, Min } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
-export class GetTrendingPostsDto {
+export class PostsGetTrendingPostsDto {
   @ApiPropertyOptional({
     description: 'Page number',
     example: 1,

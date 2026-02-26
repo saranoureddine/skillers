@@ -15,7 +15,7 @@ import {
   DeletePostDto,
   PinPostDto,
   GetFeedDto,
-  GetTrendingPostsDto,
+  PostsGetTrendingPostsDto,
   CreateCommentDto,
   UpdateCommentDto,
   DeleteCommentDto,
@@ -361,7 +361,7 @@ export const ProfPostsPublicControllerDocs = {
         description: 'Language code (e.g., "en", "ar")',
         enum: ['en', 'ar'],
       }),
-      ApiBody({ type: GetTrendingPostsDto }),
+      ApiBody({ type: PostsGetTrendingPostsDto }),
       ApiResponse({
         status: 200,
         description: 'Trending posts retrieved successfully',

@@ -10,5 +10,5 @@ export class UnblockUserDto {
   @IsNotEmpty()
   @IsString()
   @MaxLength(20)
-  blockedUserId: string;
+  blocked_user_id: string;
 }

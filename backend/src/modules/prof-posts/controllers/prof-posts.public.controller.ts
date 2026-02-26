@@ -20,7 +20,7 @@ import {
   DeletePostDto,
   PinPostDto,
   GetFeedDto,
-  GetTrendingPostsDto,
+  PostsGetTrendingPostsDto,
 } from '../dto';
 
 /**
@@ -155,7 +155,7 @@ export class ProfPostsPublicController {
   @ProfPostsPublicControllerDocs.getTrendingPosts()
   async getTrendingPosts(
     @Req() req: Request,
-    @Body() dto: GetTrendingPostsDto,
+    @Body() dto: PostsGetTrendingPostsDto,
     @Headers('Language') languageCode?: string,
   ) {
     const userId = await this.validateToken(req);
