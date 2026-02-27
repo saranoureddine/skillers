@@ -365,6 +365,12 @@ export class UsersAdminController {
     return this.usersAdminService.getAllUsers(query, adminUserId);
   }
 
+  @Get('get-user-details')
+  @UsersAdminControllerDocs.getUserDetails()
+  async getUserDetails(@Query('id') id: string) {
+    return this.usersAdminService.getUserDetails(id);
+  }
+
   @Post('create-user')
   @UsersAdminControllerDocs.createUser()
   async createUser(

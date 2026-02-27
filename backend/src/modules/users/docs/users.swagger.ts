@@ -564,6 +564,58 @@ export const UsersAdminControllerDocs = {
     ),
 
   /**
+   * GET /api/admin/users/get-user-details - Get user details (admin)
+   */
+  getUserDetails: () =>
+    applyDecorators(
+      ApiOperation({
+        summary: 'Get user details',
+        description: 'Retrieve detailed information about a user by ID including personal info, contact info, location, engagement summary. Admin only.',
+      }),
+      ApiQuery({
+        name: 'id',
+        required: true,
+        type: String,
+        description: 'User ID',
+        example: 'e87b786bac5234367b4a',
+      }),
+      ApiResponse({
+        status: 200,
+        description: 'User details retrieved successfully',
+        schema: {
+          properties: {
+            succeeded: { type: 'boolean', example: true },
+            user: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', example: 'e87b786bac5234367b4a' },
+                first_name: { type: 'string', example: 'sara' },
+                last_name: { type: 'string', example: 'noureddine1' },
+                status: { type: 'string', example: 'Active' },
+                role: { type: 'string', example: 'specialist' },
+                email: { type: 'string', example: 'sara.nrd@example.com' },
+                phone_number: { type: 'string', example: '78975140' },
+                country_code: { type: 'string', example: '+961' },
+                location: { type: 'string', example: 'Beirut, Lebanon' },
+                created_at: { type: 'string', example: '2026-02-24T12:22:34.000Z' },
+                last_active: { type: 'string', example: '2026-02-26T06:12:51.000Z' },
+                sos_numbers: { type: 'array', items: { type: 'object' } },
+                engagement: {
+                  type: 'object',
+                  properties: {
+                    comments_count: { type: 'number', example: 0 },
+                    posts_liked_count: { type: 'number', example: 5 },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }),
+      ApiErrorResponses(400, 401, 403, 404, 500),
+    ),
+
+  /**
    * POST /api/admin/users/create-user - Create user (admin)
    */
   createUser: () =>

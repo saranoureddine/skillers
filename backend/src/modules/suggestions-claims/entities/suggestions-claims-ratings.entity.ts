@@ -6,8 +6,8 @@ import { ApiProperty } from '@nestjs/swagger';
  * Table: suggestion_claim_ratings
  */
 @Entity('suggestion_claim_ratings')
-@Index(['suggestion_claim_id'])
-@Index(['user_id'])
+@Index(['suggestionClaimId'])
+@Index(['userId'])
 export class SuggestionsClaimsRatingsEntity {
   @ApiProperty({
     description: 'Rating ID (20 character string)',

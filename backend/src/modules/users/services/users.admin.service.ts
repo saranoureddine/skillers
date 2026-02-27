@@ -86,15 +86,47 @@ export class UsersAdminService {
           't1.provinceId',
           't1.createdAt',
           't1.updatedAt',
+          't1.isSpecialist', // Add isSpecialist to determine role
         ])
         .orderBy('t1.createdAt', 'DESC');
 
       // Apply search filter
       if (search) {
-        queryBuilder = queryBuilder.andWhere(
-          '(t1.firstName LIKE :search OR t1.lastName LIKE :search OR CONCAT(t1.firstName, " ", t1.lastName) LIKE :search OR t1.id LIKE :search OR t1.phoneNumber LIKE :search OR CONCAT(t1.countryCode, t1.phoneNumber) LIKE :search OR t1.email LIKE :search)',
-          { search: `%${search}%` },
-        );
+        const searchLower = search.toLowerCase().trim();
+        const conditions: string[] = [];
+        const params: any = { search: `%${search}%` };
+        
+        // Handle status search (active/inactive)
+        if (searchLower === 'active' || searchLower.startsWith('active')) {
+          conditions.push('t1.isActivated = 1');
+        } else if (searchLower === 'inactive' || searchLower.startsWith('inactive')) {
+          conditions.push('t1.isActivated = 0');
+        }
+        
+        // Handle role search (specialist/client)
+        if (searchLower === 'specialist' || searchLower.startsWith('specialist')) {
+          conditions.push('t1.isSpecialist = 1');
+        } else if (searchLower === 'client' || searchLower.startsWith('client')) {
+          conditions.push('t1.isSpecialist = 0');
+        }
+        
+        // Handle date search (format: YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY)
+        const datePattern = /^(\d{4}-\d{2}-\d{2}|\d{2}[\/\-]\d{2}[\/\-]\d{4})$/;
+        if (datePattern.test(search)) {
+          let dateValue = search;
+          // Convert DD/MM/YYYY or DD-MM-YYYY to YYYY-MM-DD
+          if (/^\d{2}[\/\-]\d{2}[\/\-]\d{4}$/.test(search)) {
+            const parts = search.split(/[\/\-]/);
+            dateValue = `${parts[2]}-${parts[1]}-${parts[0]}`;
+          }
+          conditions.push('DATE(t1.createdAt) = :dateValue');
+          params.dateValue = dateValue;
+        }
+        
+        // Always include text search in name, email, phone, ID fields
+        conditions.push('(t1.firstName LIKE :search OR t1.lastName LIKE :search OR CONCAT(t1.firstName, " ", t1.lastName) LIKE :search OR t1.id LIKE :search OR t1.phoneNumber LIKE :search OR CONCAT(t1.countryCode, t1.phoneNumber) LIKE :search OR t1.email LIKE :search)');
+        
+        queryBuilder = queryBuilder.andWhere(`(${conditions.join(' OR ')})`, params);
       }
 
       // Apply city filter if provided
@@ -130,6 +162,10 @@ export class UsersAdminService {
       // Process users (add cities, provinces, images, professions)
       const processedUsers = await Promise.all(
         users.map(async (user) => {
+          // Determine user role: specialist or client
+          const isSpecialist = user.isSpecialist === 1;
+          const role = isSpecialist ? 'specialist' : 'client';
+          
           const userData: any = {
             id: user.id,
             first_name: user.firstName,
@@ -139,7 +175,20 @@ export class UsersAdminService {
             country_code: user.countryCode,
             is_activated: user.isActivated,
             user_work: user.userWork,
-            languages: user.languages ? (typeof user.languages === 'string' ? JSON.parse(user.languages) : user.languages) : [],
+            languages: (() => {
+              if (!user.languages) return [];
+              if (typeof user.languages === 'string') {
+                try {
+                  // Try to parse as JSON first
+                  const parsed = JSON.parse(user.languages);
+                  return Array.isArray(parsed) ? parsed : [user.languages];
+                } catch (e) {
+                  // If not valid JSON, treat as single string value
+                  return [user.languages];
+                }
+              }
+              return Array.isArray(user.languages) ? user.languages : [];
+            })(),
             longitude: user.longitude ? parseFloat(user.longitude.toString()) : null,
             latitude: user.latitude ? parseFloat(user.latitude.toString()) : null,
             address: user.address,
@@ -153,6 +202,8 @@ export class UsersAdminService {
             province_id: user.provinceId,
             created_at: user.createdAt,
             updated_at: user.updatedAt,
+            role: role, // 'client' or 'specialist'
+            is_specialist: isSpecialist, // boolean for convenience
             cities: [], // TODO: Fetch from user_cities
             province: null, // TODO: Fetch from province table
             more_images: [], // TODO: Fetch from ag_attachment
@@ -183,6 +234,229 @@ export class UsersAdminService {
         throw error;
       }
       throw new InternalServerErrorException('Failed to get users: ' + error.message);
+    }
+  }
+
+  /**
+   * Get user details by ID (get-user-details)
+   * Returns personal info, contact info, location, engagement summary
+   */
+  async getUserDetails(userId: string): Promise<any> {
+    try {
+      // Get user basic info
+      const user = await this.usersRepository
+        .createQueryBuilder('t1')
+        .select([
+          't1.id',
+          't1.firstName',
+          't1.lastName',
+          't1.email',
+          't1.phoneNumber',
+          't1.countryCode',
+          't1.isActivated',
+          't1.userWork',
+          't1.languages',
+          't1.longitude',
+          't1.latitude',
+          't1.address',
+          't1.bio',
+          't1.website',
+          't1.isPublicProfile',
+          't1.location',
+          't1.gender',
+          't1.birthDate',
+          't1.cityId',
+          't1.provinceId',
+          't1.createdAt',
+          't1.updatedAt',
+          't1.isSpecialist',
+          't1.specialistVerified',
+          't1.yearsExperience',
+          't1.hourlyRate',
+          't1.specialistCategory',
+          't1.averageRating',
+          't1.totalRatings',
+          't1.followersCount',
+          't1.followingCount',
+          't1.lastSeen',
+          't1.mainImage',
+          't1.coverImage',
+          't1.isOnline',
+          't1.registrationMethod',
+        ])
+        .where('t1.id = :userId', { userId })
+        .getOne();
+
+      if (!user) {
+        throw new NotFoundException(`User with ID ${userId} not found`);
+      }
+
+      // Parse languages
+      let languages: any[] = [];
+      if (user.languages) {
+        try {
+          const parsed = JSON.parse(user.languages);
+          languages = Array.isArray(parsed) ? parsed : [user.languages];
+        } catch {
+          languages = user.languages ? [user.languages] : [];
+        }
+      }
+
+      // Get engagement data - comments count
+      let commentsCount = 0;
+      try {
+        const commentsResult = await this.dataSource.query(
+          'SELECT COUNT(*) as count FROM prof_comments WHERE user_id = ? AND is_deleted = 0',
+          [userId],
+        );
+        commentsCount = parseInt(commentsResult[0]?.count || '0', 10);
+      } catch (e) {
+        // Table might not exist, default to 0
+      }
+
+      // Get engagement data - posts liked count
+      let postsLikedCount = 0;
+      try {
+        const likesResult = await this.dataSource.query(
+          'SELECT COUNT(*) as count FROM prof_likes WHERE user_id = ? AND likeable_type = ?',
+          [userId, 'post'],
+        );
+        postsLikedCount = parseInt(likesResult[0]?.count || '0', 10);
+      } catch (e) {
+        // Table might not exist, default to 0
+      }
+
+      // Get SOS/emergency contact numbers
+      let sosNumbers: any[] = [];
+      try {
+        const sosResult = await this.dataSource.query(
+          'SELECT * FROM user_sos_numbers WHERE user_id = ?',
+          [userId],
+        );
+        sosNumbers = sosResult || [];
+      } catch (e) {
+        // Table might not exist, default to empty
+      }
+
+      // Get user cities
+      let cities: any[] = [];
+      try {
+        const citiesResult = await this.dataSource.query(
+          `SELECT c.id, c.name FROM user_cities uc 
+           INNER JOIN cities c ON c.id = uc.city_id 
+           WHERE uc.user_id = ?`,
+          [userId],
+        );
+        cities = citiesResult || [];
+      } catch (e) {
+        // Table might not exist, default to empty
+      }
+
+      // Get province
+      let province = null;
+      if (user.provinceId) {
+        try {
+          const provinceResult = await this.dataSource.query(
+            'SELECT id, name FROM provinces WHERE id = ?',
+            [user.provinceId],
+          );
+          province = provinceResult[0] || null;
+        } catch (e) {
+          // Table might not exist
+        }
+      }
+
+      // Get professions
+      let professions: any[] = [];
+      try {
+        const professionsResult = await this.dataSource.query(
+          `SELECT p.id, p.name, pu.is_primary FROM profession_user pu 
+           INNER JOIN professions p ON p.id = pu.profession_id 
+           WHERE pu.user_id = ?`,
+          [userId],
+        );
+        professions = professionsResult || [];
+      } catch (e) {
+        // Table might not exist, default to empty
+      }
+
+      const role = user.isSpecialist === 1 ? 'specialist' : 'client';
+      const primaryProfession = professions.find((p: any) => p.is_primary === 1) || professions[0] || null;
+
+      return {
+        succeeded: true,
+        user: {
+          // Personal Information
+          id: user.id,
+          first_name: user.firstName,
+          last_name: user.lastName,
+          status: user.isActivated === 1 ? 'Active' : 'Inactive',
+          is_activated: user.isActivated,
+          role: role,
+          is_specialist: user.isSpecialist === 1,
+          specialist_verified: user.specialistVerified === 1,
+          gender: user.gender,
+          birth_date: user.birthDate,
+          bio: user.bio,
+          website: user.website,
+          user_work: user.userWork,
+          languages: languages,
+          main_image: user.mainImage,
+          cover_image: user.coverImage,
+          is_online: user.isOnline === 1,
+          is_public_profile: user.isPublicProfile === 1,
+          registration_method: user.registrationMethod,
+
+          // Contact Information
+          email: user.email,
+          phone_number: user.phoneNumber,
+          country_code: user.countryCode,
+          sos_numbers: sosNumbers,
+
+          // Location Information
+          location: user.location,
+          address: user.address,
+          latitude: user.latitude,
+          longitude: user.longitude,
+          city_id: user.cityId,
+          province_id: user.provinceId,
+          cities: cities,
+          province: province,
+
+          // Specialist Information
+          specialist_category: user.specialistCategory,
+          years_experience: user.yearsExperience,
+          hourly_rate: user.hourlyRate,
+          average_rating: user.averageRating,
+          total_ratings: user.totalRatings,
+
+          // Social
+          followers_count: user.followersCount,
+          following_count: user.followingCount,
+
+          // Professions
+          professions: professions,
+          has_professions: professions.length > 0,
+          professions_count: professions.length,
+          primary_profession: primaryProfession,
+
+          // Dates
+          created_at: user.createdAt,
+          updated_at: user.updatedAt,
+          last_active: user.lastSeen,
+
+          // Engagement Summary
+          engagement: {
+            comments_count: commentsCount,
+            posts_liked_count: postsLikedCount,
+          },
+        },
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to get user details: ' + error.message);
     }
   }
 
