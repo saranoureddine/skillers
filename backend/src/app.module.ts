@@ -51,6 +51,7 @@ import { ChatBlockedUsersModule } from './modules/chat-blocked-users/chat-blocke
 import { ChatMessagesModule } from './modules/chat-messages/chat-messages.module';
 import { WebSocketManageModule } from './modules/websocket-manage/websocket-manage.module';
 import { SuggestionsClaimsModule } from './modules/suggestions-claims/suggestions-claims.module';
+import { AgUsersModule } from './modules/ag-users/ag-users.module';
 
 @Module({
   imports: [
@@ -102,6 +103,7 @@ import { SuggestionsClaimsModule } from './modules/suggestions-claims/suggestion
     ChatMessagesModule, // Chat messages management
     WebSocketManageModule, // WebSocket server process management
     SuggestionsClaimsModule, // Suggestions and claims management
+    AgUsersModule, // Admin users (ag_users) management
   ],
   providers: [
     // Global Exception Filter

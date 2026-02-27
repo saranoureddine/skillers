@@ -1,1 +1,156 @@
 .cursor/
+
+# Frontend - Dependencies
+frontend/node_modules/
+frontend/.pnpm-store/
+
+# Frontend - Next.js
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/dist/
+
+# Frontend - Environment variables
+frontend/.env
+frontend/.env*.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Frontend - Debug
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/.pnpm-debug.log*
+
+# Frontend - Testing
+frontend/coverage/
+frontend/.nyc_output/
+frontend/.jest/
+
+# Frontend - IDE
+frontend/.vscode/
+frontend/.idea/
+frontend/*.swp
+frontend/*.swo
+frontend/*~
+
+# Frontend - OS
+frontend/.DS_Store
+frontend/Thumbs.db
+frontend/.DS_Store?
+frontend/._*
+frontend/.Spotlight-V100
+frontend/.Trashes
+frontend/ehthumbs.db
+frontend/Desktop.ini
+
+# Frontend - Vercel
+frontend/.vercel/
+
+# Frontend - Turbo
+frontend/.turbo/
+
+# Frontend - TypeScript
+frontend/*.tsbuildinfo
+frontend/.tsbuildinfo
+
+# Frontend - v0 runtime files
+frontend/__v0_runtime_loader.js
+frontend/__v0_devtools.tsx
+frontend/__v0_jsx-dev-runtime.ts
+
+# Frontend - Cache
+frontend/.cache/
+frontend/.parcel-cache/
+frontend/.next/cache/
+
+# Backend - Dependencies
+backend/node_modules/
+backend/package-lock.json
+backend/yarn.lock
+backend/pnpm-lock.yaml
+
+# Backend - Build Output
+backend/dist/
+backend/build/
+backend/*.tsbuildinfo
+
+# Backend - Environment Variables
+backend/.env
+backend/.env.local
+backend/.env.*.local
+backend/.env.development.local
+backend/.env.test.local
+backend/.env.production.local
+
+# Backend - Logs
+backend/logs/
+backend/*.log
+backend/npm-debug.log*
+backend/yarn-debug.log*
+backend/yarn-error.log*
+backend/pnpm-debug.log*
+
+# Backend - Testing
+backend/coverage/
+backend/.nyc_output/
+backend/*.lcov
+
+# Backend - IDE / Editor
+backend/.vscode/
+backend/.idea/
+backend/*.swp
+backend/*.swo
+backend/*~
+
+# Backend - OS
+backend/.DS_Store
+backend/Thumbs.db
+backend/.DS_Store?
+backend/._*
+backend/.Spotlight-V100
+backend/.Trashes
+backend/ehthumbs.db
+backend/Desktop.ini
+
+# Backend - Uploads (user-generated content)
+backend/uploads/
+backend/uploads/*
+
+# Backend - Temporary files
+backend/temp_*.txt
+backend/temp_*.log
+backend/*.tmp
+
+# Backend - TypeScript
+backend/*.tsbuildinfo
+backend/.tsbuildinfo
+
+# Backend - NestJS
+backend/.nest/
+
+models/
+backend/.vercel/
+
+# Backend - Turbo
+backend/.turbo/
+
+# Backend - TypeScript
+backend/*.tsbuildinfo
+backend/.tsbuildinfo
+
+# Backend - v0 runtime files
+backend/__v0_runtime_loader.js
+backend/__v0_devtools.tsx
+backend/__v0_jsx-dev-runtime.ts
+
+# Backend - Cache
+backend/.cache/
+backend/.parcel-cache/
+backend/.next/cache/
+
+# Backend - Uploads (user-generated content)
+backend/uploads/
+backend/uploads/*

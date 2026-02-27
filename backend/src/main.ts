@@ -42,6 +42,7 @@ async function bootstrap() {
       'Token-auth',
     )
     .addTag('Users', 'User management endpoints')
+    .addTag('Ag Users', 'Admin users (ag_users) management endpoints')
     .addTag('User Blocks', 'User blocking and unblocking endpoints')
     .addTag('Addresses', 'User addresses management endpoints')
     .addTag('Voice Calls', 'Voice and video call management endpoints')
